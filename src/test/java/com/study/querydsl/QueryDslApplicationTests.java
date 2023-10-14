@@ -7,6 +7,7 @@ import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.annotation.Commit;
 import org.springframework.test.annotation.Rollback;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -14,6 +15,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest
 @Transactional
+@Rollback(value = false) // or @Commit으로 DB에 test흔적남겨서 확인하기
 class QueryDslApplicationTests {
 
     @PersistenceContext
@@ -27,7 +29,7 @@ class QueryDslApplicationTests {
         em.persist(hello);
 
         JPAQueryFactory jpaQueryFactory = new JPAQueryFactory(em);
-        QHello qHello = new QHello("hello");
+        QHello qHello = QHello.hello;
         Hello result = jpaQueryFactory
                 .selectFrom(qHello)
                 .fetchOne();
