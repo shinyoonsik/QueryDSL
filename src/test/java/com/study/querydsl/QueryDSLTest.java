@@ -1,7 +1,6 @@
 package com.study.querydsl;
 
 
-import com.querydsl.jpa.JPQLQueryFactory;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.study.querydsl.entity.Member;
 import com.study.querydsl.entity.QMember;
