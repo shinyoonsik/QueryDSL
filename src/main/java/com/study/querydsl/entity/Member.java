@@ -1,10 +1,10 @@
 package com.study.querydsl.entity;
 
 import jakarta.persistence.*;
-import lombok.AccessLevel;
-import lombok.NoArgsConstructor;
-import lombok.ToString;
+import lombok.*;
 
+@Getter
+@Setter
 @Entity
 @Table(name = "member")
 @NoArgsConstructor(access = AccessLevel.PROTECTED) // JPA는 리플렉션을 사용하기 때문에 기본 생성자가 필요하다
