@@ -34,8 +34,6 @@ public class Test {
         public void decrement() {
             this.count--;
         }
-
-
     }
 
     @org.junit.jupiter.api.Test
