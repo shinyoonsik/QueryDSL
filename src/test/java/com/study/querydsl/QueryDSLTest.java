@@ -2,10 +2,8 @@ package com.study.querydsl;
 
 
 import com.querydsl.core.Tuple;
-import com.querydsl.jpa.impl.JPAQuery;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.study.querydsl.entity.Member;
-import com.study.querydsl.entity.QTeam;
 import com.study.querydsl.entity.Team;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
@@ -190,5 +188,55 @@ public class QueryDSLTest {
                 .fetch();
 
         assertThat(result.size()).isGreaterThan(0);
+    }
+
+    /**
+     * 연관관계가 있는 경우
+     * 팀A에 소속된 모든 멤버
+     */
+    @Test
+    void joinTest(){
+        List<Member> result = queryFactory
+                .selectFrom(member)
+                .join(member.team, team)
+                .where(team.name.eq("teamA"))
+                .fetch();
+
+        assertThat(result)
+                .extracting("name")
+                .containsExactly("member1", "member2");
+    }
+
+    /**
+     * 연관관계가 없는 조인: 세타 조인 = 크로스 조인
+     * 카티시안 프로덕트의 경우의 수 발생
+     */
+    @Test
+    void testThetaJoin(){
+        em.persist(new Member("teamA"));
+        em.persist(new Member("teamB"));
+
+        List<Member> result = queryFactory
+                .select(member)
+                .from(member, team) // 경우의 수: n x m
+                .where(member.name.eq(team.name)) // 여기서 거름
+                .fetch();
+
+        assertThat(result)
+                .extracting("name")
+                .containsExactly("teamA", "teamB");
+    }
+
+    @Test
+    void left_join_test(){
+        List<Tuple> result = queryFactory
+                .select(member, team)
+                .from(member)
+                .leftJoin(member.team, team).on(team.name.eq("teamA"))
+                .fetch();
+
+        for( Tuple tuple : result){
+            System.out.println("tuple= " + tuple);
+        }
     }
 }
