@@ -6,7 +6,9 @@ import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.study.querydsl.entity.Member;
 import com.study.querydsl.entity.Team;
 import jakarta.persistence.EntityManager;
+import jakarta.persistence.EntityManagerFactory;
 import jakarta.persistence.PersistenceContext;
+import jakarta.persistence.PersistenceUnit;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -25,6 +27,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 @Transactional
 @Rollback(value = false)
 public class QueryDSLTest {
+
+    @PersistenceUnit
+    EntityManagerFactory emf;
     
     @PersistenceContext
     private EntityManager em;
@@ -238,5 +243,39 @@ public class QueryDSLTest {
         for( Tuple tuple : result){
             System.out.println("tuple= " + tuple);
         }
+    }
+
+    @Test
+    void fetchJoinNo(){
+        em.flush();
+        em.clear();
+
+        Member foundMember = queryFactory
+                .selectFrom(member)
+                .where(member.name.eq("member1"))
+                .fetchOne();
+
+        boolean loaded = emf.getPersistenceUnitUtil().isLoaded(foundMember.getTeam());
+        assertThat(loaded).as("페치 조인 미적용").isFalse();
+
+        System.out.println(foundMember.getTeam()); // 사용할때, team을 조회함. lazy loading
+
+        boolean loaded2 = emf.getPersistenceUnitUtil().isLoaded(foundMember.getTeam());
+        assertThat(loaded2).as("페치 조인 미적용").isTrue();
+    }
+
+    @Test
+    void fetchJoinUse(){
+        em.flush();
+        em.clear();
+
+        Member result = queryFactory
+                .selectFrom(member)
+                .join(member.team, team).fetchJoin()
+                .where(member.name.eq("member1"))
+                .fetchOne();
+
+        boolean loaded = emf.getPersistenceUnitUtil().isLoaded(result.getTeam());
+        assertThat(loaded).as("페치 조인 미적용").isTrue();
     }
 }
