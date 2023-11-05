@@ -5,6 +5,7 @@ import com.querydsl.core.Tuple;
 import com.querydsl.jpa.impl.JPAQuery;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.study.querydsl.entity.Member;
+import com.study.querydsl.entity.QTeam;
 import com.study.querydsl.entity.Team;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
@@ -13,16 +14,18 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.annotation.Rollback;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
-import static com.querydsl.core.types.ExpressionUtils.count;
 import static com.study.querydsl.entity.QMember.member;
+import static com.study.querydsl.entity.QTeam.team;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest
 @Transactional
+@Rollback(value = false)
 public class QueryDSLTest {
     
     @PersistenceContext
@@ -168,5 +171,24 @@ public class QueryDSLTest {
         assertThat(result.get(member.count())).isEqualTo(4L);
         assertThat(result.get(0, Long.class)).isEqualTo(4L);
         assertThat(result.get(member.age.sum())).isEqualTo(61);
+    }
+
+    /**
+     * 팀의 이름과 각 팀의 평균 연령을 구해라
+     * select t.name, avg(m.age)
+     * from TEAM t
+     * join MEMBER m on t.TEAM_ID = m.TEAM_ID
+     * group by t.name
+     */
+    @Test
+    void groupingTest(){
+        List<Tuple> result = queryFactory
+                .select(team.name, member.age.avg())
+                .from(team)
+                .join(member).on(team.eq(member.team))
+                .groupBy(team.name) // group by규칙??
+                .fetch();
+
+        assertThat(result.size()).isGreaterThan(0);
     }
 }
