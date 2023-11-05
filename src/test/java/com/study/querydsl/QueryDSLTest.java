@@ -1,6 +1,7 @@
 package com.study.querydsl;
 
 
+import com.querydsl.core.Tuple;
 import com.querydsl.jpa.impl.JPAQuery;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.study.querydsl.entity.Member;
@@ -148,5 +149,24 @@ public class QueryDSLTest {
                 .fetchOne();
 
         assertThat(resultCount > 0).isTrue();
+    }
+
+    @Test
+    void testAggregationFunction(){
+        Tuple result = queryFactory
+                .select(
+                        member.count(),
+                        member.age.sum(),
+                        member.age.avg(),
+                        member.age.max(),
+                        member.age.min()
+                )
+                .from(member)
+                .fetchOne();
+
+        assertThat(result.get(member.age.avg())).isNotNull();
+        assertThat(result.get(member.count())).isEqualTo(4L);
+        assertThat(result.get(0, Long.class)).isEqualTo(4L);
+        assertThat(result.get(member.age.sum())).isEqualTo(61);
     }
 }
