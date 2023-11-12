@@ -2,8 +2,10 @@ package com.study.querydsl;
 
 
 import com.querydsl.core.Tuple;
+import com.querydsl.jpa.JPAExpressions;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.study.querydsl.entity.Member;
+import com.study.querydsl.entity.QMember;
 import com.study.querydsl.entity.Team;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityManagerFactory;
@@ -19,6 +21,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
+import static com.querydsl.jpa.JPAExpressions.*;
 import static com.study.querydsl.entity.QMember.member;
 import static com.study.querydsl.entity.QTeam.team;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -47,7 +50,7 @@ public class QueryDSLTest {
         Member member1 = new Member("member1", 10, teamA);
         Member member2 = new Member("member2", 11, teamA);
         Member member3 = new Member("member3", 20, teamB);
-        Member member4 = new Member("member4", 20, teamB);
+        Member member4 = new Member("member4", 21, teamB);
         em.persist(member1);
         em.persist(member2);
         em.persist(member3);
@@ -277,5 +280,85 @@ public class QueryDSLTest {
 
         boolean loaded = emf.getPersistenceUnitUtil().isLoaded(result.getTeam());
         assertThat(loaded).as("페치 조인 미적용").isTrue();
+    }
+
+    /**
+     * SubQuery
+     */
+    @Test
+    @DisplayName("평균나이보다 나이가 많은 멤버")
+    void test_subQueryGoe(){
+
+        QMember subMember = new QMember("subMember");
+
+        List<Member> result = queryFactory
+                .selectFrom(member)
+                .where(member.age.goe(
+                                select(subMember.age.avg())
+                                        .from(subMember)
+                        )
+                ).fetch();
+
+        assertThat(result).isNotNull();
+        assertThat(result.size() > 0).isTrue();
+        assertThat(result).extracting("age").containsExactly(20, 21);
+    }
+
+    /**
+     * SubQuery
+     */
+    @Test
+    @DisplayName("나이가 가장 많은 멤버")
+    void test_subQuery(){
+
+        QMember subMember = new QMember("subMember");
+
+        List<Member> result = queryFactory
+                .selectFrom(member)
+                .where(member.age.goe(
+                                select(subMember.age.max())
+                                        .from(subMember)
+                        )
+                ).fetch();
+
+        assertThat(result).isNotNull();
+        assertThat(result)
+                .extracting("age")
+                .containsExactly(21);
+    }
+
+    @Test
+    @DisplayName("in 쿼리 테스트")
+    void in절_테스트(){
+        QMember subMember = new QMember("subMember");
+
+        List<Member> result = queryFactory
+                .selectFrom(member)
+                .where(member.age.in(
+                        select(subMember.age)
+                                .from(subMember)
+                                .where(subMember.age.goe(11))
+
+                ))
+                .fetch();
+
+        assertThat(result).isNotNull();
+        assertThat(result).extracting("age").containsExactly(11, 20, 21);
+    }
+
+    @Test
+    @DisplayName("select절 subQuery")
+    void test_select_subQuery(){
+        QMember subMember = new QMember("subMember");
+
+        List<Tuple> result = queryFactory
+                .select(member.name, select(subMember.age.max())
+                        .from(subMember)
+                )
+                .from(member).fetch();
+
+        for(Tuple element : result){
+            System.out.println(element);
+        }
     }
 }
