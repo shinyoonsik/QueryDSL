@@ -4,8 +4,6 @@ package com.study.querydsl;
 import com.querydsl.core.BooleanBuilder;
 import com.querydsl.core.Tuple;
 import com.querydsl.core.types.ExpressionUtils;
-import com.querydsl.core.types.Predicate;
-import com.querydsl.core.types.Projections;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.core.types.dsl.CaseBuilder;
 import com.querydsl.core.types.dsl.Expressions;
@@ -20,7 +18,6 @@ import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityManagerFactory;
 import jakarta.persistence.PersistenceContext;
 import jakarta.persistence.PersistenceUnit;
-import jakarta.persistence.criteria.CriteriaBuilder;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -31,9 +28,9 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.ObjectUtils;
 
 import java.util.List;
-import java.util.function.Supplier;
 
-import static com.querydsl.core.types.Projections.*;
+import static com.querydsl.core.types.Projections.bean;
+import static com.querydsl.core.types.Projections.fields;
 import static com.querydsl.jpa.JPAExpressions.select;
 import static com.study.querydsl.entity.QMember.member;
 import static com.study.querydsl.entity.QTeam.team;
@@ -532,7 +529,7 @@ public class QueryDSLTest {
     @Test
     @DisplayName("BooleanExpression을 사용한 동적쿼리")
     void dynamicQuery_BooleanExpression(){
-        String username = null;
+        String username = "member1";
         Integer ageParam = 10;
 
 //        List<Member> result = searchMember2(username, ageParam);
@@ -588,5 +585,43 @@ public class QueryDSLTest {
 
     private BooleanBuilder ageEq2(Integer age){
         return age != null ? new BooleanBuilder(member.age.eq(age)) : new BooleanBuilder();
+    }
+
+    @Test
+    void bulkUpdate(){
+        // update결과에 영향을 받은 row수
+        // bulk연산은 영속성 컨텍스트를 거치지않고 바로 DB에 쿼리를 날림
+        long resultCount = queryFactory
+                .update(member)
+                .set(member.name, "비회원")
+                .where(member.age.gt(10))
+                .execute();
+
+        System.out.println("resultCount = " + resultCount);
+
+//        영속성 컨텍스트 초기화
+//        em.flush();
+//        em.clear();
+
+        // DB에서 값을 가져와도 영속성 컨텍스트에 엔티티가 존재하면 영속성 컨텍스트안에 있는
+        // 엔티티가 우선한다. 즉, DB에서 가져온 내용을 버림
+        List<Member> result = queryFactory
+                .selectFrom(member)
+                .fetch();
+
+        for (Member member1 : result) {
+            System.out.println("member1 = " + member1);
+
+        }
+    }
+
+    @Test
+    void bulkAdd(){
+        long count = queryFactory
+                .update(member)
+                .set(member.age, member.age.add(1))
+                .execute();
+
+        assertThat(count > 0).isTrue();
     }
 }
