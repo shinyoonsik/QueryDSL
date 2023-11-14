@@ -6,6 +6,7 @@ import com.querydsl.core.Tuple;
 import com.querydsl.core.types.ExpressionUtils;
 import com.querydsl.core.types.Predicate;
 import com.querydsl.core.types.Projections;
+import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.core.types.dsl.CaseBuilder;
 import com.querydsl.core.types.dsl.Expressions;
 import com.querydsl.jpa.JPAExpressions;
@@ -19,6 +20,7 @@ import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityManagerFactory;
 import jakarta.persistence.PersistenceContext;
 import jakarta.persistence.PersistenceUnit;
+import jakarta.persistence.criteria.CriteriaBuilder;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -29,6 +31,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.ObjectUtils;
 
 import java.util.List;
+import java.util.function.Supplier;
 
 import static com.querydsl.core.types.Projections.*;
 import static com.querydsl.jpa.JPAExpressions.select;
@@ -532,6 +535,7 @@ public class QueryDSLTest {
         String username = null;
         Integer ageParam = 10;
 
+//        List<Member> result = searchMember2(username, ageParam);
         List<Member> result = searchMember2(username, ageParam);
 
         assertThat(result.size()).isEqualTo(1);
@@ -541,15 +545,48 @@ public class QueryDSLTest {
         return queryFactory
                 .selectFrom(member)
                 .where(usernameEq(username),
-                        ageEq(ageParam)) // where에 null이 들어가면 무시된다. 따라서 ageEq()이 null을 리턴하면 조건에서 무시됨 + 조건을 나열하면 조건끼리는 and이다
+                        ageEq(ageParam)) // where에 null이 들어가면 무시된다. 따라서 ageEq()이 null을 리턴하면 조건에서 무시됨 + 조건을 나열하면(,) 조건끼리는 and이다
                 .fetch();
     }
 
-    private Predicate usernameEq(String username) {
+    private BooleanExpression usernameEq(String username) {
         return username != null ? member.name.eq(username) : null;
     }
 
-    private Predicate ageEq(Integer ageParam) {
+    private BooleanExpression ageEq(Integer ageParam) {
         return ageParam != null ? member.age.eq(ageParam) : null;
+    }
+
+    /**
+     * 조건을 or로 조합하는 방법
+     */
+    @Test
+    @DisplayName("동적쿼리 or조건 조합")
+    void dynamicQuery_BooleanExpression2(){
+        String name = "member1";
+        Integer age = 10;
+
+        List<Member> result = searchMember3(name, age);
+
+        assertThat(result).isNotNull();
+    }
+
+    private List<Member> searchMember3(String name, Integer age) {
+        return queryFactory
+                .selectFrom(member)
+                .where(nameEqOrAgeEq(name, age))
+                .fetch();
+    }
+
+    private BooleanBuilder nameEqOrAgeEq(String name, Integer age){
+        return nameEq(name).or(ageEq2(age));
+    }
+
+    private BooleanBuilder nameEq(String name){
+        return name != null ? new BooleanBuilder(member.name.eq(name)) : new BooleanBuilder();
+    }
+
+    private BooleanBuilder ageEq2(Integer age){
+        return age != null ? new BooleanBuilder(member.age.eq(age)) : new BooleanBuilder();
     }
 }
