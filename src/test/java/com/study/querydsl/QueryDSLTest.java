@@ -4,6 +4,7 @@ package com.study.querydsl;
 import com.querydsl.core.BooleanBuilder;
 import com.querydsl.core.Tuple;
 import com.querydsl.core.types.ExpressionUtils;
+import com.querydsl.core.types.Predicate;
 import com.querydsl.core.types.Projections;
 import com.querydsl.core.types.dsl.CaseBuilder;
 import com.querydsl.core.types.dsl.Expressions;
@@ -500,7 +501,7 @@ public class QueryDSLTest {
 
     @Test
     @DisplayName("BooleanBuilder를 사용한 동적쿼리")
-    void dynammicQuery_BooleanBuilder(){
+    void dynamicQuery_BooleanBuilder(){
         String username = "member1";
         Integer ageParam = null;
 
@@ -523,5 +524,32 @@ public class QueryDSLTest {
                 .selectFrom(member)
                 .where(booleanBuilder)
                 .fetch();
+    }
+
+    @Test
+    @DisplayName("BooleanExpression을 사용한 동적쿼리")
+    void dynamicQuery_BooleanExpression(){
+        String username = null;
+        Integer ageParam = 10;
+
+        List<Member> result = searchMember2(username, ageParam);
+
+        assertThat(result.size()).isEqualTo(1);
+    }
+
+    private List<Member> searchMember2(String username, Integer ageParam) {
+        return queryFactory
+                .selectFrom(member)
+                .where(usernameEq(username),
+                        ageEq(ageParam)) // where에 null이 들어가면 무시된다. 따라서 ageEq()이 null을 리턴하면 조건에서 무시됨 + 조건을 나열하면 조건끼리는 and이다
+                .fetch();
+    }
+
+    private Predicate usernameEq(String username) {
+        return username != null ? member.name.eq(username) : null;
+    }
+
+    private Predicate ageEq(Integer ageParam) {
+        return ageParam != null ? member.age.eq(ageParam) : null;
     }
 }
