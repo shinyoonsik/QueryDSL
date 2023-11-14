@@ -1,12 +1,9 @@
 package com.study.querydsl;
 
 
-import com.querydsl.core.QueryFactory;
 import com.querydsl.core.Tuple;
-import com.querydsl.core.types.Expression;
 import com.querydsl.core.types.dsl.CaseBuilder;
 import com.querydsl.core.types.dsl.Expressions;
-import com.querydsl.jpa.JPAExpressions;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.study.querydsl.entity.Member;
 import com.study.querydsl.entity.QMember;
@@ -25,7 +22,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
-import static com.querydsl.jpa.JPAExpressions.*;
+import static com.querydsl.jpa.JPAExpressions.select;
 import static com.study.querydsl.entity.QMember.member;
 import static com.study.querydsl.entity.QTeam.team;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -418,6 +415,22 @@ public class QueryDSLTest {
 
         for(String t : result){
             System.out.println(t);
+        }
+    }
+
+    @Test
+    void tuple_projection(){
+        // Tuple자료구조를 repository를 넘어서는 설계는 좋지 않다
+        // why, 하부 구현기술(JPA, QueryDSL)을 service로직에서 알 필요도 없으며, coupling이 높아진다
+        // 만약, 넘어선다면 Tuple에 문제가 생기면 영향력이 repository를 넘어 직접적인 의존성이 있는 곳까지 퍼져나간다.
+        // 그러므로, Tuple을 사용하게 되더라도 repository안에서만 사용하고 바깥계층으로는 DTO로 변환해서 전달
+        List<Tuple> result = queryFactory
+                .select(member.name, member.age)
+                .from(member)
+                .fetch();
+
+        for (Tuple tuple : result) {
+            System.out.println("tuple = " + tuple);
         }
     }
 }
