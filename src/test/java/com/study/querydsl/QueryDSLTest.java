@@ -461,7 +461,7 @@ public class QueryDSLTest {
 
     @Test
     @DisplayName("DTO를 활용한 Projection by fields")
-    void UserDto2(){
+    void UserDto2() {
         // getter, setter사용하지않고 바로 필드에 주입됨
         List<MemberDto> result = queryFactory
                 .select(fields(MemberDto.class,
@@ -481,7 +481,7 @@ public class QueryDSLTest {
      */
     @Test
     @DisplayName("별칭이 다른 DTO Projection")
-    void userDTO3(){
+    void userDTO3() {
         QMember subMember = new QMember("memberSub");
 
         List<UserDto> result = queryFactory
@@ -501,7 +501,7 @@ public class QueryDSLTest {
 
     @Test
     @DisplayName("BooleanBuilder를 사용한 동적쿼리")
-    void dynamicQuery_BooleanBuilder(){
+    void dynamicQuery_BooleanBuilder() {
         String username = "member1";
         Integer ageParam = null;
 
@@ -512,11 +512,11 @@ public class QueryDSLTest {
 
     private List<Member> searchMember1(String username, Integer ageParam) {
         BooleanBuilder booleanBuilder = new BooleanBuilder();
-        if(!ObjectUtils.isEmpty(username)){
+        if (!ObjectUtils.isEmpty(username)) {
             booleanBuilder.and(member.name.eq(username));
         }
 
-        if(!ObjectUtils.isEmpty(ageParam)){
+        if (!ObjectUtils.isEmpty(ageParam)) {
             booleanBuilder.and(member.age.eq(ageParam));
         }
 
@@ -528,7 +528,7 @@ public class QueryDSLTest {
 
     @Test
     @DisplayName("BooleanExpression을 사용한 동적쿼리")
-    void dynamicQuery_BooleanExpression(){
+    void dynamicQuery_BooleanExpression() {
         String username = "member1";
         Integer ageParam = 10;
 
@@ -559,7 +559,7 @@ public class QueryDSLTest {
      */
     @Test
     @DisplayName("동적쿼리 or조건 조합")
-    void dynamicQuery_BooleanExpression2(){
+    void dynamicQuery_BooleanExpression2() {
         String name = "member1";
         Integer age = 10;
 
@@ -575,20 +575,20 @@ public class QueryDSLTest {
                 .fetch();
     }
 
-    private BooleanBuilder nameEqOrAgeEq(String name, Integer age){
+    private BooleanBuilder nameEqOrAgeEq(String name, Integer age) {
         return nameEq(name).or(ageEq2(age));
     }
 
-    private BooleanBuilder nameEq(String name){
+    private BooleanBuilder nameEq(String name) {
         return name != null ? new BooleanBuilder(member.name.eq(name)) : new BooleanBuilder();
     }
 
-    private BooleanBuilder ageEq2(Integer age){
+    private BooleanBuilder ageEq2(Integer age) {
         return age != null ? new BooleanBuilder(member.age.eq(age)) : new BooleanBuilder();
     }
 
     @Test
-    void bulkUpdate(){
+    void bulkUpdate() {
         // update결과에 영향을 받은 row수
         // bulk연산은 영속성 컨텍스트를 거치지않고 바로 DB에 쿼리를 날림
         long resultCount = queryFactory
@@ -611,12 +611,11 @@ public class QueryDSLTest {
 
         for (Member member1 : result) {
             System.out.println("member1 = " + member1);
-
         }
     }
 
     @Test
-    void bulkAdd(){
+    void bulkAdd() {
         long count = queryFactory
                 .update(member)
                 .set(member.age, member.age.add(1))
@@ -624,4 +623,28 @@ public class QueryDSLTest {
 
         assertThat(count > 0).isTrue();
     }
+
+    @Test
+    void SQL_function() {
+        // 비교시 소문자로 변경해서 비교하라
+        List<String> result = queryFactory
+                .select(member.name)
+                .from(member)
+                .where(member.name.eq(Expressions.stringTemplate("function('lower', {0})", member.name)))
+                .fetch();
+
+        // member -> M으로 변경
+        List<String> fetch = queryFactory
+                .select(Expressions.stringTemplate(
+                        "function('replace', {0}, {1}, {2})",
+                        member.name, "member", "M"))
+                .from(member)
+                .fetch();
+
+        for (String s : fetch) {
+            System.out.println("memberName = " + s);
+        }
+
+    }
+
 }
