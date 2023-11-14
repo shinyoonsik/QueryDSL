@@ -1,6 +1,7 @@
 package com.study.querydsl;
 
 
+import com.querydsl.core.BooleanBuilder;
 import com.querydsl.core.Tuple;
 import com.querydsl.core.types.ExpressionUtils;
 import com.querydsl.core.types.Projections;
@@ -24,9 +25,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.annotation.Rollback;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.ObjectUtils;
 
 import java.util.List;
 
+import static com.querydsl.core.types.Projections.*;
 import static com.querydsl.jpa.JPAExpressions.select;
 import static com.study.querydsl.entity.QMember.member;
 import static com.study.querydsl.entity.QTeam.team;
@@ -444,7 +447,7 @@ public class QueryDSLTest {
     void UserDto() {
         // getter, setter를 통해 값이 DTO에 주입됨
         List<MemberDto> result = queryFactory
-                .select(Projections.bean(MemberDto.class,
+                .select(bean(MemberDto.class,
                         member.name,
                         member.age))
                 .from(member)
@@ -460,7 +463,7 @@ public class QueryDSLTest {
     void UserDto2(){
         // getter, setter사용하지않고 바로 필드에 주입됨
         List<MemberDto> result = queryFactory
-                .select(Projections.fields(MemberDto.class,
+                .select(fields(MemberDto.class,
                         member.name,
                         member.age))
                 .from(member)
@@ -481,7 +484,7 @@ public class QueryDSLTest {
         QMember subMember = new QMember("memberSub");
 
         List<UserDto> result = queryFactory
-                .select(Projections.fields(UserDto.class,
+                .select(fields(UserDto.class,
                         member.name.as("username"),
                         ExpressionUtils.as(JPAExpressions
                                 .select(subMember.age.max())
@@ -493,5 +496,32 @@ public class QueryDSLTest {
         for (UserDto userDto : result) {
             System.out.println("userDto = " + userDto);
         }
+    }
+
+    @Test
+    @DisplayName("BooleanBuilder를 사용한 동적쿼리")
+    void dynammicQuery_BooleanBuilder(){
+        String username = "member1";
+        Integer ageParam = null;
+
+        List<Member> result = searchMember1(username, ageParam);
+
+        assertThat(result.size()).isEqualTo(1);
+    }
+
+    private List<Member> searchMember1(String username, Integer ageParam) {
+        BooleanBuilder booleanBuilder = new BooleanBuilder();
+        if(!ObjectUtils.isEmpty(username)){
+            booleanBuilder.and(member.name.eq(username));
+        }
+
+        if(!ObjectUtils.isEmpty(ageParam)){
+            booleanBuilder.and(member.age.eq(ageParam));
+        }
+
+        return queryFactory
+                .selectFrom(member)
+                .where(booleanBuilder)
+                .fetch();
     }
 }
