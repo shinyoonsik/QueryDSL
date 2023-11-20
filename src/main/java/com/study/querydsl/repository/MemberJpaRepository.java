@@ -14,11 +14,15 @@ import static com.study.querydsl.entity.QMember.*;
 
 // 순수 JPA레포지토리
 @Repository
-@RequiredArgsConstructor
 public class MemberJpaRepository {
 
     private final EntityManager em;
     private final JPAQueryFactory queryFactory; // QueryDSL을 사용하려면 JPAQueryFactory객체가 필요
+
+    public MemberJpaRepository(EntityManager em) {
+        this.em = em;
+        this.queryFactory = new JPAQueryFactory(em);
+    }
 
     @Transactional
     public void save(Member member){
