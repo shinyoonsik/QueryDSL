@@ -25,7 +25,7 @@ class MemberJpaRepositoryTest {
     EntityManager em;
 
     @Autowired
-    JPAQueryFactory jpaQueryFactory;
+    JPAQueryFactory queryFactory;
 
     @Autowired
     MemberJpaRepository memberJpaRepository;
@@ -43,10 +43,22 @@ class MemberJpaRepositoryTest {
         List<Member> memberList = memberJpaRepository.findAll();
         assertThat(memberList.size() > 0).isTrue();
 
-        List<Member> foundMember2 = memberJpaRepository.findByName(name1);
-        assertThat(foundMember2.size() > 0).isTrue();
+        List<Member> memberList2 = memberJpaRepository.findByName(name1);
+        assertThat(memberList2).containsExactly(member1);
     }
 
+    @Test
+    void queryDSL_test(){
+        String name1 = "member1";
+        int age = 10;
+        Member member1 = new Member(name1, age);
+        memberJpaRepository.save(member1);
 
+        List<Member> result = memberJpaRepository.findByName_queryDSL(name1);
+        assertThat(result).containsExactly(member1);
+
+        List<Member> result2 = memberJpaRepository.findAll_queryDSL();
+        assertThat(result2).containsExactly(member1);
+    }
 
 }
