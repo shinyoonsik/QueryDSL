@@ -32,20 +32,20 @@ public class InitMember {
         @PersistenceContext
         private EntityManager em;
 
-//        @Transactional // entityManager는 트랜잭션내에서 사용되어야 한다
+        @Transactional // entityManager는 트랜잭션내에서 사용되어야 한다
         public void init(){
             Team teamA = new Team("teamA");
             Team teamB = new Team("teamB");
             Member member1 = em.find(Member.class, 1L);
             System.out.println(member1);
-//            em.persist(teamA);
-//            em.persist(teamB);
-//
-//            for(int i=0; i<100; i++){
-//                Team selectedTeam = (i % 2 == 0 ? teamA : teamB);
-//                Member member = new Member("member" + i, i, selectedTeam);
-//                em.persist(member);
-//            }
+            em.persist(teamA);
+            em.persist(teamB);
+
+            for(int i=0; i<100; i++){
+                Team selectedTeam = (i % 2 == 0 ? teamA : teamB);
+                Member member = new Member("member" + i, i, selectedTeam);
+                em.persist(member);
+            }
         }
     }
 }
