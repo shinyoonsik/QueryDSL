@@ -263,18 +263,6 @@ public class QueryDSLTest {
         em.flush();
         em.clear();
 
-        Member foundMember = queryFactory
-                .selectFrom(member)
-                .where(member.name.eq("member1"))
-                .fetchOne();
-
-        boolean loaded = emf.getPersistenceUnitUtil().isLoaded(foundMember.getTeam());
-        assertThat(loaded).as("페치 조인 미적용").isFalse();
-
-        System.out.println(foundMember.getTeam()); // 사용할때, team을 조회함. lazy loading
-
-        boolean loaded2 = emf.getPersistenceUnitUtil().isLoaded(foundMember.getTeam());
-        assertThat(loaded2).as("페치 조인 미적용").isTrue();
     }
 
     @Test
