@@ -1,19 +1,18 @@
 package com.study.querydsl.repository;
 
-import com.study.querydsl.entity.Member;
+import com.study.querydsl.dto.MemberSearchCondition;
+import com.study.querydsl.dto.MemberTeamDTO;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestInstance;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
+import org.springframework.boot.test.context.SpringBootTest;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@DataJpaTest
-@TestInstance(TestInstance.Lifecycle.PER_CLASS)
+@SpringBootTest
 class MemberRepositoryTest {
 
     static MemberRepository memberRepository;
@@ -24,13 +23,13 @@ class MemberRepositoryTest {
     public static void init(@Autowired MemberRepository myMemberRepository){
         memberRepository = myMemberRepository;
 
-        Member member1 = new Member(name1, 10);
-        Member result1 = memberRepository.save(member1);
+        com.study.querydsl.entity.Member member1 = new com.study.querydsl.entity.Member(name1, 10);
+        com.study.querydsl.entity.Member result1 = memberRepository.save(member1);
 
         assertThat(result1.getName()).isEqualTo(name1);
 
-        Member member2 = new Member(name2, 10);
-        Member result2 = memberRepository.save(member2);
+        com.study.querydsl.entity.Member member2 = new com.study.querydsl.entity.Member(name2, 10);
+        com.study.querydsl.entity.Member result2 = memberRepository.save(member2);
 
         assertThat(result2.getName()).isEqualTo(name2);
     }
@@ -39,14 +38,23 @@ class MemberRepositoryTest {
     @Test
     @DisplayName("Spring Data JPA조회 테스트")
     void test(){
-        List<Member> results = memberRepository.findByName("eclipse");
+        List<com.study.querydsl.entity.Member> results = memberRepository.findByName("eclipse");
         assertThat(results).extracting("name").containsExactly(name1);
     }
 
     @Test
     @DisplayName("Spring Data JPA조회 테스트2")
     void test1(){
-        List<Member> results = memberRepository.findAll();
+        List<com.study.querydsl.entity.Member> results = memberRepository.findAll();
         assertThat(results.size() > 0).isTrue();
+    }
+
+    @Test
+    @DisplayName("Custom Repo 테스트")
+    void test3(){
+        MemberSearchCondition condition = new MemberSearchCondition(name1);
+        List<MemberTeamDTO> result = memberRepository.search(condition);
+
+        assertThat(result).extracting("username").containsExactly(name1);
     }
 }

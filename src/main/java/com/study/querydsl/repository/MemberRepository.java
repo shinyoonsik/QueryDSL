@@ -1,10 +1,9 @@
 package com.study.querydsl.repository;
 
-import com.study.querydsl.entity.Member;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
 
-public interface MemberRepository extends JpaRepository<Member, Long> {
-    List<Member> findByName(String name);
+public interface MemberRepository extends JpaRepository<com.study.querydsl.entity.Member, Long>, MemberCustom {
+    List<com.study.querydsl.entity.Member> findByName(String name);
 }
