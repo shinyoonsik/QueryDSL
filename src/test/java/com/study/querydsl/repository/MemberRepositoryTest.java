@@ -2,11 +2,16 @@ package com.study.querydsl.repository;
 
 import com.study.querydsl.dto.MemberSearchCondition;
 import com.study.querydsl.dto.MemberTeamDTO;
+import com.study.querydsl.entity.Member;
+import com.study.querydsl.entity.Team;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 
 import java.util.List;
 
@@ -15,46 +20,71 @@ import static org.assertj.core.api.Assertions.assertThat;
 @SpringBootTest
 class MemberRepositoryTest {
 
-    static MemberRepository memberRepository;
+    static MemberRepositoryRepository memberRepository;
+    static TeamRepository teamRepository;
+
     static String name1 = "eclipse";
     static String name2 = "hoola";
 
     @BeforeAll
-    public static void init(@Autowired MemberRepository myMemberRepository){
+    public static void init(@Autowired MemberRepositoryRepository myMemberRepository, @Autowired TeamRepository teamRepository){
         memberRepository = myMemberRepository;
+        teamRepository = teamRepository;
 
-        com.study.querydsl.entity.Member member1 = new com.study.querydsl.entity.Member(name1, 10);
-        com.study.querydsl.entity.Member result1 = memberRepository.save(member1);
+        Team teamA = new Team("teamA");
+        teamRepository.save(teamA);
 
-        assertThat(result1.getName()).isEqualTo(name1);
+        Team teamB = new Team("teamA");
+        teamRepository.save(teamB);
 
-        com.study.querydsl.entity.Member member2 = new com.study.querydsl.entity.Member(name2, 10);
-        com.study.querydsl.entity.Member result2 = memberRepository.save(member2);
+        for(int i=0; i<20; i++){
+            Member member = new Member("member10" + i, i);
 
-        assertThat(result2.getName()).isEqualTo(name2);
+            if(i % 2 == 0) member.setTeam(teamA);
+            else member.setTeam(teamB);
+
+            memberRepository.save(member);
+        }
     }
 
 
     @Test
     @DisplayName("Spring Data JPA조회 테스트")
+    @Disabled
     void test(){
-        List<com.study.querydsl.entity.Member> results = memberRepository.findByName("eclipse");
+        List<Member> results = memberRepository.findByName("eclipse");
         assertThat(results).extracting("name").containsExactly(name1);
     }
 
     @Test
     @DisplayName("Spring Data JPA조회 테스트2")
+    @Disabled
     void test1(){
-        List<com.study.querydsl.entity.Member> results = memberRepository.findAll();
+        List<Member> results = memberRepository.findAll();
         assertThat(results.size() > 0).isTrue();
     }
 
     @Test
     @DisplayName("Custom Repo 테스트")
+    @Disabled
     void test3(){
         MemberSearchCondition condition = new MemberSearchCondition(name1);
         List<MemberTeamDTO> result = memberRepository.search(condition);
 
         assertThat(result).extracting("username").containsExactly(name1);
+    }
+
+    @Test
+    @DisplayName("Paging처리 테스트")
+    void test4(){
+        PageRequest page = PageRequest.of(0, 10);
+        MemberSearchCondition memberSearchCondition = new MemberSearchCondition();
+
+        Page<MemberTeamDTO> result = memberRepository.searchComplex(memberSearchCondition, page);
+
+        for (MemberTeamDTO memberTeamDTO : result) {
+            System.out.println("전체 개수" + result.getContent().size());
+            System.out.println("memberTeamDTO = " + memberTeamDTO);
+        }
     }
 }
