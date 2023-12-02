@@ -1,6 +1,7 @@
 package com.study.querydsl.repository;
 
 import com.querydsl.core.types.dsl.BooleanExpression;
+import com.querydsl.jpa.impl.JPAQuery;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.study.querydsl.dto.MemberSearchCondition;
 import com.study.querydsl.dto.MemberTeamDTO;
@@ -10,6 +11,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.support.PageableExecutionUtils;
 import org.springframework.util.ObjectUtils;
 
 import java.util.List;
@@ -69,15 +71,14 @@ public class MemberRepositoryCustomImpl implements MemberRepositoryCustom {
                 .limit(pageable.getPageSize()) // offset부터 가져오는 최대 개수 == 한 페이지에 보여줄 컨텐츠의 개수
                 .fetch();
 
-        long count = queryFactory
+        JPAQuery<Long> countQuery = queryFactory
                 .select(member.count())
                 .from(member)
                 .leftJoin(member.team, team)
                 .where(memberNameEq(condition.getUsername()),
                         teamNameEq(condition.getTeamName()),
-                        ageGoe(condition.getAgeGoe()))
-                .fetchOne();
+                        ageGoe(condition.getAgeGoe()));
 
-        return new PageImpl<>(content,pageable, count);
+        return PageableExecutionUtils.getPage(content, pageable, () -> countQuery.fetchOne());
     }
 }

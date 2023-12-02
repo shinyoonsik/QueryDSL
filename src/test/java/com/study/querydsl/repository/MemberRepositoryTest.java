@@ -37,7 +37,7 @@ class MemberRepositoryTest {
         Team teamB = new Team("teamA");
         teamRepository.save(teamB);
 
-        for(int i=0; i<20; i++){
+        for(int i=0; i<5; i++){
             Member member = new Member("member10" + i, i);
 
             if(i % 2 == 0) member.setTeam(teamA);
@@ -77,7 +77,7 @@ class MemberRepositoryTest {
     @Test
     @DisplayName("Paging처리 테스트")
     void test4(){
-        PageRequest page = PageRequest.of(0, 10);
+        PageRequest page = PageRequest.of(1, 3);
         MemberSearchCondition memberSearchCondition = new MemberSearchCondition();
 
         Page<MemberTeamDTO> result = memberRepository.searchComplex(memberSearchCondition, page);
